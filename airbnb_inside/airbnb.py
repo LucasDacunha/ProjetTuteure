@@ -1,14 +1,18 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+import geopandas as gpd
 from matplotlib import pyplot as plt
+from shapely.geometry import Point, LineString, shape
 
-from google.colab import drive
-drive.mount._DEBUG = True
-# print(getpass.getpass())
-drive.mount('/content/drive')
+# from google.colab import drive
+# drive.mount._DEBUG = True
+# # print(getpass.getpass())
+# drive.mount('/content/drive')
 
 my_path = "/AirbnbInside" # THIS is your GDrive path
-gdrive_path = "/content/drive" + "/My Drive" + my_path
+# gdrive_path = "/content/drive" + "/My Drive" + my_path
+gdrive_path = "C:/Users/matte/Desktop/projetTut/AirbnbInside" # pour pc
+
 # /content/drive/My Drive/folders/my_folder_name
 
 listing_input_file = gdrive_path + "/bordeaux/listings.csv" # The specific file you are trying to access
@@ -108,23 +112,31 @@ def positionClient(reviewData,rawdata,year,withYear):
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
-print("================== Position des clients ayant loué en 2018 parmis les 30 premiers clients ==================")
-print(positionClient(reviewData.head(30),rawdata,2018,1))
+# print("================== Position des clients ayant loué en 2018 parmis les 30 premiers clients ==================")
+# print(positionClient(reviewData.head(30),rawdata,2018,1))
 
 # ==============================================================================
-listTowns= ['paris'] # pas 'bordeaux' dedans car je le lis deja avant (dataframe de depart)
+# A NE PAS RUN SINON LE PC CRASH !!!!!!!!!!!!!!!!!!!
+# listTowns= ['paris','antwerp','barcelona','brussels','geneva','ghent','lyon','vaud','zurich']
+listTowns= ['paris','barcelona','antwerp','brussels','geneva','ghent','lyon','vaud','zurich'] # pas 'bordeaux' dedans car je le lis deja avant (dataframe de depart)
 gdrive_path = gdrive_path+"/"
 revCsv = "/reviews.csv"
 listCsv = "/listings.csv"
 reviewDataFull = pd.read_csv(gdrive_path+'bordeaux'+revCsv)
 listDataFull = pd.read_csv(gdrive_path+'bordeaux'+listCsv)
+print("nb row (before):"+str(len(reviewDataFull.index)))
 for town in listTowns:
-  review_input_file = gdrive_path + town + revCsv
-  list_input_file = gdrive_path + town + listCsv
-  rdCurrent = pd.read_csv(review_input_file)
-  listCurrent = pd.read_csv(list_input_file)
-  reviewDataFull.append(rdCurrent)
-  listDataFull.append(listCurrent)
+    review_input_file = gdrive_path + town + revCsv
+    list_input_file = gdrive_path + town + listCsv
+    rdCurrent = pd.read_csv(review_input_file)
+    print("    "+town+" nb rows: "+str(len(rdCurrent.index)))
+    listCurrent = pd.read_csv(list_input_file)
+    reviewDataFull = reviewDataFull.append(rdCurrent, ignore_index=True, sort=False)
+    listDataFull = listDataFull.append(listCurrent, ignore_index=True, sort=False)
+    print("    new total rows: "+str(len(reviewDataFull.index))+"\n")
+
+print("nb row (after):"+str(len(reviewDataFull.index)))
+print("nb row with duplicate index:"+str(len(reviewDataFull[reviewDataFull.index.duplicated()].index)))
 
 def selectClientPresentAtLeastNTimes(reviewDataFull,n):
   counts = reviewDataFull['reviewer_id'].value_counts()
@@ -141,16 +153,47 @@ def positionClientBis(reviewData,listData):
   listDataRenameAndFilter=listData.rename(columns={"id": "listing_id"}).filter(items=['listing_id','latitude','longitude']) #'neighbourhood_cleansed',
   reviewDataFilter=reviewData.filter(items=['listing_id','reviewer_id','reviewer_name','date'])
   df=reviewDataFilter.join(listDataRenameAndFilter.set_index('listing_id'), on='listing_id').sort_values(by=['reviewer_id','date'])
+  df=df[df['latitude'].notna()][df['longitude'].notna()]
   return df
 
-print("================== Position des clients ayant loué au moins 9 fois chez Airbnb ==================")
-reviewDataFullNTimes = selectClientPresentAtLeastNTimes(reviewDataFull,9)
-print(positionClientBis(reviewDataFullNTimes,listDataFull))
+# print("================== Position des clients ayant loué au moins 9 fois chez Airbnb ==================")
+# reviewDataFullNTimes = selectClientPresentAtLeastNTimes(reviewDataFull,9)
+# print(positionClientBis(reviewDataFullNTimes,listDataFull))
 
 def allPositionOfOneClient(idClient,reviewDataFull,listDataFull):
   reviewDataFull = reviewDataFull[reviewDataFull['reviewer_id'].isin([idClient])] # ca marche
   return positionClientBis(reviewDataFull,listDataFull)
 
-print("================== Position de Malory (presente au moins 9 fois)==================")
+# print("================== Position de Malory (presente au moins 9 fois)==================")
 reviewDataFullNTimes = selectClientPresentAtLeastNTimes(reviewDataFull,9)
-print(allPositionOfOneClient(51189707,reviewDataFull,listDataFull)) # id de Malory
+onePersPos = allPositionOfOneClient(51189707,reviewDataFull,listDataFull)# id de Malory
+print(onePersPos) 
+
+def selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,n):
+  reviewerList = reviewDataFull['reviewer_id'].value_counts()[:n].index.tolist()
+  reviewDataFull = reviewDataFull[reviewDataFull['reviewer_id'].isin(reviewerList)] # ca marche
+  return positionClientBis(reviewDataFull,listDataFull)
+
+posNClientsMostOcc = selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,1)
+print(posNClientsMostOcc)
+
+world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+# world.head()
+# dfPos = onePersPos
+# dfPos = positionClientBis(reviewDataFullNTimes,listDataFull)
+dfPos = posNClientsMostOcc
+gdfPos = gpd.GeoDataFrame(
+    dfPos, geometry=gpd.points_from_xy(dfPos.longitude, dfPos.latitude))
+
+
+#zip the coordinates into a point object and convert to a GeoData Frame
+geometry = [Point(xy) for xy in zip(dfPos.longitude, dfPos.latitude)]
+geo_df = gpd.GeoDataFrame(dfPos, geometry=geometry)
+
+geo_df = geo_df.groupby(['reviewer_id'])['geometry'].apply(lambda x: LineString(x.tolist()) if x.size > 1 else x.tolist())
+geo_df = gpd.GeoDataFrame(geo_df, geometry='geometry')
+axGeo = geo_df.plot(color='red', zorder=2)
+
+ax = gdfPos.plot(ax=axGeo,color='k', zorder=3)
+world.plot(ax=ax, zorder=1)
+plt.show()

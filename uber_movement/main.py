@@ -3,6 +3,7 @@ import pandas as pd
 
 pd.set_option('display.max_columns', None)
 pd.set_option('max_colwidth', None)
+pd.set_option('display.max_rows', None)
 
 city = pd.read_csv("san_francisco-traversals.csv")
 # city = pd.read_csv("paris-traversals.csv")
@@ -38,15 +39,15 @@ def print_values(data, text):
     print()
 
 
-print_values(city, "")
+#print_values(city, "")
 print_values(weekday, " in weekdays")
 print_values(weekend, " in weekends")
-print_values(count_1, " that appears only in weekdays or in weekends")
-print_values(count_1_weekday, " that appears only in weekdays")
-print_values(count_1_weekend, " that appears only in weekends")
-print_values(count_2, " that appears both in weekdays and in weekends")
-print_values(count_2_weekday, " in weekdays between those that appears both in weekdays and in weekends")
-print_values(count_2_weekend, " in weekends between those that appears both in weekdays and in weekends")
+#print_values(count_1, " that appears only in weekdays or in weekends")
+#print_values(count_1_weekday, " that appears only in weekdays")
+#print_values(count_1_weekend, " that appears only in weekends")
+#print_values(count_2, " that appears both in weekdays and in weekends")
+#print_values(count_2_weekday, " in weekdays between those that appears both in weekdays and in weekends")
+#print_values(count_2_weekend, " in weekends between those that appears both in weekdays and in weekends")
 
 count_2_diff_hexids = count_2.hexid.count() / 2
 nb_only_weekday_hexids = count_1_weekday.hexid.count()
@@ -192,4 +193,3 @@ cnt_src_m = march.sourceid.value_counts()
 print(cnt_src_m)
 cnt_dst_m = march.dstid.value_counts()
 print(cnt_dst_m)
-
