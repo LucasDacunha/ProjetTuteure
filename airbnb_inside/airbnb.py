@@ -233,6 +233,11 @@ def calculMoyennePosId(listDataHistoFull):
   cpt = 0
   # listDataHistoFull['AvgLat'] = listDataHistoFull.groupby('id')['latitude'].transform('mean')
   # listDataHistoFull['AvgLong'] = listDataHistoFull.groupby('id')['longitude'].transform('mean')
+  
+  print("================== drop dupli ====================")
+  print("nb rows before drop : "+str(len(listDataHistoFull.index)))
+  listDataHistoFull=listDataHistoFull.drop_duplicates(subset=['id','latitude','longitude'])
+  print("nb rows after drop : "+str(len(listDataHistoFull.index)))
   listDataHistoFull=listDataHistoFull.groupby('id').mean().reset_index()
   return listDataHistoFull
 
