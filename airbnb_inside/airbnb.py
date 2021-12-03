@@ -112,11 +112,11 @@ def positionClient(reviewData,rawdata,year,withYear):
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
 # print("================== Position des clients ayant loué en 2018 parmis les 30 premiers clients ==================")
 # print(positionClient(reviewData.head(30),rawdata,2018,1))
 
 # ==============================================================================
-# A NE PAS RUN SINON LE PC CRASH !!!!!!!!!!!!!!!!!!!
 # listTowns= ['paris','antwerp','barcelona','brussels','geneva','ghent','lyon','vaud','zurich']
 listTowns= ['paris','barcelona','antwerp','brussels','geneva','ghent','lyon','vaud','zurich'] # pas 'bordeaux' dedans car je le lis deja avant (dataframe de depart)
 gdrive_path = gdrive_path+"/"
@@ -177,23 +177,78 @@ def selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,n):
 posNClientsMostOcc = selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,1)
 print(posNClientsMostOcc)
 
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-# world.head()
-# dfPos = onePersPos
-# dfPos = positionClientBis(reviewDataFullNTimes,listDataFull)
-dfPos = posNClientsMostOcc
-gdfPos = gpd.GeoDataFrame(
-    dfPos, geometry=gpd.points_from_xy(dfPos.longitude, dfPos.latitude))
+def afficherTrajectoire(posClients):
+  world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+  # world.head()
+  dfPos = posClients
+  gdfPos = gpd.GeoDataFrame(
+      dfPos, geometry=gpd.points_from_xy(dfPos.longitude, dfPos.latitude))
+
+  #zip the coordinates into a point object and convert to a GeoData Frame
+  geometry = [Point(xy) for xy in zip(dfPos.longitude, dfPos.latitude)]
+  geo_df = gpd.GeoDataFrame(dfPos, geometry=geometry)
+
+  geo_df = geo_df.groupby(['reviewer_id'])['geometry'].apply(lambda x: LineString(x.tolist()) if x.size > 1 else x.tolist())
+  geo_df = gpd.GeoDataFrame(geo_df, geometry='geometry')
+  axGeo = geo_df.plot(color='red', zorder=2)
+
+  ax = gdfPos.plot(ax=axGeo,color='k', zorder=3)
+  world.plot(ax=ax, zorder=1)
+  plt.show()
+
+# afficherTrajectoire(onePersPos)
+# afficherTrajectoire(positionClientBis(reviewDataFullNTimes,listDataFull))
+# afficherTrajectoire(posNClientsMostOcc)
+
+def concatHisto(town,gdrive_path):
+  listDates= ['Dec2020','Jan2021','Feb2021','Mar2021','Apr2021','Jun2021','Jul2021','Aug2021']
+  gdrive_path = gdrive_path
+  listCsv = "/listings.csv"
+  listDataHistoFull = pd.read_csv(gdrive_path+town+listCsv) #premier csv de base (je crois de septembre)
+  print("nb row (before):"+str(len(listDataHistoFull.index)))
+  for date in listDates:
+      list_input_file = gdrive_path + town + '/historique/listings' + date+'.csv'
+      listCurrent = pd.read_csv(list_input_file)
+      print("    "+town+" nb rows: "+str(len(listCurrent.index)))
+      listDataHistoFull = listDataHistoFull.append(listCurrent, ignore_index=True, sort=False)
+      print("    new total rows: "+str(len(listDataHistoFull.index))+"\n")
+
+  print("nb row (after):"+str(len(listDataHistoFull.index)))
+  print("nb row with duplicate index:"+str(len(listDataHistoFull[listDataHistoFull.index.duplicated()].index)))
+  return listDataHistoFull.filter(items=['id','last_scraped','neighbourhood_cleansed','latitude','longitude'])
+
+def selectAppartsAlwaysPresent(reviewDataFull,listDataHistoFull):
+  n=9 # 9 car 9 csv (8 dans l'historique et 1 de septembre)
+  appartList = listDataHistoFull['id'].value_counts()[:n].index.tolist()
+  listDataHistoFull = listDataHistoFull[listDataHistoFull['id'].isin(appartList)]
+  return listDataHistoFull
+
+# listDataHistoBordeauFull = concatHisto('bordeaux',gdrive_path)
+# print(selectAppartsAlwaysPresent(reviewDataFull,listDataHistoBordeauFull))
+# En regardant les positions on voit qu'elles varient mais pas tout le temps
+# Sur les 9 fois varient 3 fois sur le 1er id mais le 2eme ne varient pas
+
+def calculMoyennePosId(listDataHistoFull):
+  idDejaFait = []
+  cpt = 0
+  # listDataHistoFull['AvgLat'] = listDataHistoFull.groupby('id')['latitude'].transform('mean')
+  # listDataHistoFull['AvgLong'] = listDataHistoFull.groupby('id')['longitude'].transform('mean')
+  listDataHistoFull=listDataHistoFull.groupby('id').mean().reset_index()
+  return listDataHistoFull
+
+# print(calculMoyennePosId(selectAppartsAlwaysPresent(reviewDataFull,listDataHistoBordeauFull)))
 
 
-#zip the coordinates into a point object and convert to a GeoData Frame
-geometry = [Point(xy) for xy in zip(dfPos.longitude, dfPos.latitude)]
-geo_df = gpd.GeoDataFrame(dfPos, geometry=geometry)
+def selectNClients_withTheMostNumberOfOccurences_AvgPos_inTown(town,nbClients,gdrive_path):
+  listDataHistoFull = concatHisto(town,gdrive_path)
+  listDataHistoMoyFull = calculMoyennePosId(listDataHistoFull)
+  # select n clients avec le plus d'occurences
+  reviewDataFull = pd.read_csv(gdrive_path+town+"/reviews.csv")
+  return selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataHistoMoyFull,nbClients)
 
-geo_df = geo_df.groupby(['reviewer_id'])['geometry'].apply(lambda x: LineString(x.tolist()) if x.size > 1 else x.tolist())
-geo_df = gpd.GeoDataFrame(geo_df, geometry='geometry')
-axGeo = geo_df.plot(color='red', zorder=2)
 
-ax = gdfPos.plot(ax=axGeo,color='k', zorder=3)
-world.plot(ax=ax, zorder=1)
-plt.show()
+avgPosNClientsMostOcc = selectNClients_withTheMostNumberOfOccurences_AvgPos_inTown('Paris',1,gdrive_path)
+print("================== Position moyenne client le plus présent à Paris ==================")
+print(avgPosNClientsMostOcc)
+
+afficherTrajectoire(avgPosNClientsMostOcc)
