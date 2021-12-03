@@ -1,4 +1,5 @@
 import pandas as pd
+import pandasql as ps
 import numpy as np
 from matplotlib import pyplot as plt
 import os
@@ -60,7 +61,6 @@ print("\n Types : ")
 print(df.dtypes)
 
 dfListe = decoupeZone(df)
-# print(df)
 print(len(dfListe))
 # for i in range(0,len(dfListe)):
 #   print("\n === Separation Zone ===")
@@ -128,4 +128,20 @@ print(lowerBoundET)
 # X      | Zone1           | !Zone1
 # Zone2  |     ?           | maxValueFRZone2
 # !Zone2 | maxValueFRZone1 | osef ?
+
+print("\n ==================== TEST TABLEAU MANUEL")
+
+# df2 = pd.read_csv("./../../Data_FluxVisionOrange_AMIF_hackathon/presencejournee-activitenuitee-bassindevie.csv", sep=';',
+#                  skipinitialspace=True)
+# df2['Type'] = df2.Type.apply(mapType)
+# df2['Duree'] = df2.Duree.apply(mapDuree)
+#
+# dfJ1 = ps.sqldf("select * from df2 where Type=0 and Zone='Commune Montreuil' and Date='2020-04-20' and Duree=2 and ZoneActivite=400479")
+# print("========================= DF J1 : ")
+# print(dfJ1)
+#
+# print("========================= DF J2 : ")
+# dfJ2 = ps.sqldf("select * from df2 where Type=0 and Zone='Commune Montreuil' and Date='2020-04-21' and Duree=2 and ZoneActivite=400479")
+# print(dfJ2)
+
 
