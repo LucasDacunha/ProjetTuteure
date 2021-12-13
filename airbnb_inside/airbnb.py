@@ -118,7 +118,7 @@ pd.set_option('display.width', 1000)
 
 # ==============================================================================
 # listTowns= ['paris','antwerp','barcelona','brussels','geneva','ghent','lyon','vaud','zurich']
-listTowns= ['paris','barcelona','antwerp','brussels','geneva','ghent','lyon','vaud','zurich'] # pas 'bordeaux' dedans car je le lis deja avant (dataframe de depart)
+listTowns= ['paris']#,'barcelona','antwerp','brussels','geneva','ghent','lyon','vaud','zurich'] # pas 'bordeaux' dedans car je le lis deja avant (dataframe de depart)
 gdrive_path = gdrive_path+"/"
 revCsv = "/reviews.csv"
 listCsv = "/listings.csv"
@@ -229,8 +229,6 @@ def selectAppartsAlwaysPresent(reviewDataFull,listDataHistoFull):
 # Sur les 9 fois varient 3 fois sur le 1er id mais le 2eme ne varient pas
 
 def calculMoyennePosId(listDataHistoFull):
-  idDejaFait = []
-  cpt = 0
   # listDataHistoFull['AvgLat'] = listDataHistoFull.groupby('id')['latitude'].transform('mean')
   # listDataHistoFull['AvgLong'] = listDataHistoFull.groupby('id')['longitude'].transform('mean')
   
@@ -252,8 +250,31 @@ def selectNClients_withTheMostNumberOfOccurences_AvgPos_inTown(town,nbClients,gd
   return selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataHistoMoyFull,nbClients)
 
 
-avgPosNClientsMostOcc = selectNClients_withTheMostNumberOfOccurences_AvgPos_inTown('Paris',1,gdrive_path)
-print("================== Position moyenne client le plus présent à Paris ==================")
-print(avgPosNClientsMostOcc)
+# avgPosNClientsMostOcc = selectNClients_withTheMostNumberOfOccurences_AvgPos_inTown('Paris',1,gdrive_path)
+# print("================== Position moyenne client le plus présent à Paris ==================")
+# print(avgPosNClientsMostOcc)
 
-afficherTrajectoire(avgPosNClientsMostOcc)
+# afficherTrajectoire(avgPosNClientsMostOcc)
+
+def appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path):
+  listDataHistoFull = concatHisto(town,gdrive_path)
+  listDataHistoFull=listDataHistoFull.drop_duplicates(subset=['id','latitude','longitude'], keep='first')
+  nbAppart = len(listDataHistoFull.drop_duplicates(subset=['id'], keep='first'))
+  listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) >= 2).reset_index().drop_duplicates(subset=['id'], keep='first')
+  return listDataHistoFull, nbAppart
+
+town='paris'
+appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
+print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
+print(appartMorePrecise.head(30))
+print("[ ... ]")
+print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
+print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
+
+town='bordeaux'
+appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
+print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
+print(appartMorePrecise.head(30))
+print("[ ... ]")
+print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
+print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
