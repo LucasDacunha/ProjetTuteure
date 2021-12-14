@@ -63,6 +63,9 @@ def calculDistanceMoy(addr1,df,typeDico,dico):
     return sommeDist/df.values.sum()
 
 
+
+
+
 df = pd.read_csv("./../../Data_FluxVisionOrange_AMIF_hackathon/presencejournee-activitenuitee-communes.csv", sep=';',
                  skipinitialspace=True)
 dico = pd.read_csv("./../../Data_FluxVisionOrange_AMIF_hackathon/Dictionnaire_Label_Zones_Communes.csv", sep=';',
@@ -82,6 +85,12 @@ print("Nombre ligne : ")
 print(len(zoneMontreuil))
 
 addr1 = (48.863812, 2.448451) #coordoonées montreuil
+
+def calculDistanceApply(zoneId):
+    if(zoneId != -1):
+        address = getLabelZoneFromId(zoneId, typeDico, dico)
+        addr2 = calculLatLon(address, zoneId)
+        return calculDistance(addr1, addr2)
 
 
 print("\n======== Zones_Activite diff en tout : ========")
@@ -105,6 +114,9 @@ print("======== Distance moyenne 20 premiers : ")
 print(calculDistanceMoy(addr1,vcZoneAct.head(20),typeDico,dico))
 print("======== Distance moyenne 20 derniers : ")
 print(calculDistanceMoy(addr1,vcZoneAct.tail(20),typeDico,dico))
+# frameVcZoneAct = vcZoneAct.to_frame().index.to_frame()
+# moy = frameVcZoneAct[0].apply(calculDistanceApply)
+# print(moy)
 
 
 print("\n======== Zones_Nuitee diff en tout : ========")
@@ -128,6 +140,7 @@ print("======== Distance moyenne 20 premier : ")
 print(calculDistanceMoy(addr1,vcZoneNuit.head(20),typeDico,dico))
 print("======== Distance moyenne 20 derniers : ")
 print(calculDistanceMoy(addr1,vcZoneNuit.tail(20),typeDico,dico))
+
 
 
 
