@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from matplotlib import pyplot as plt
-from shapely.geometry import Point, LineString, shape
+from shapely.geometry import Point, LineString, Polygon, shape
 
 # from google.colab import drive
 # drive.mount._DEBUG = True
@@ -165,17 +165,17 @@ def allPositionOfOneClient(idClient,reviewDataFull,listDataFull):
   return positionClientBis(reviewDataFull,listDataFull)
 
 # print("================== Position de Malory (presente au moins 9 fois)==================")
-reviewDataFullNTimes = selectClientPresentAtLeastNTimes(reviewDataFull,9)
-onePersPos = allPositionOfOneClient(51189707,reviewDataFull,listDataFull)# id de Malory
-print(onePersPos) 
+# reviewDataFullNTimes = selectClientPresentAtLeastNTimes(reviewDataFull,9)
+# onePersPos = allPositionOfOneClient(51189707,reviewDataFull,listDataFull)# id de Malory
+# print(onePersPos) 
 
 def selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,n):
   reviewerList = reviewDataFull['reviewer_id'].value_counts()[:n].index.tolist()
   reviewDataFull = reviewDataFull[reviewDataFull['reviewer_id'].isin(reviewerList)] # ca marche
   return positionClientBis(reviewDataFull,listDataFull)
 
-posNClientsMostOcc = selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,1)
-print(posNClientsMostOcc)
+# posNClientsMostOcc = selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,1)
+# print(posNClientsMostOcc)
 
 def afficherTrajectoire(posClients):
   world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
@@ -260,21 +260,77 @@ def appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path):
   listDataHistoFull = concatHisto(town,gdrive_path)
   listDataHistoFull=listDataHistoFull.drop_duplicates(subset=['id','latitude','longitude'], keep='first')
   nbAppart = len(listDataHistoFull.drop_duplicates(subset=['id'], keep='first'))
-  listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) >= 2).reset_index().drop_duplicates(subset=['id'], keep='first')
+  # listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) >= 2).reset_index() # à la base
+  listDataHistoFull['nb_pos_diff']=listDataHistoFull.groupby('id')['id'].transform('count')
+  # listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) > 1).drop_duplicates(subset=['id'], keep='first').sort_values(by=['nb_pos_diff'],ascending=False).reset_index()
+  listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) > 1)
+  listDataHistoFull= listDataHistoFull.groupby('id').mean().sort_values(by=['nb_pos_diff'],ascending=False).reset_index()
   return listDataHistoFull, nbAppart
 
-town='paris'
-appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
-print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
-print(appartMorePrecise.head(30))
-print("[ ... ]")
-print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
-print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
+# town='paris'
+# appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
+# print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
+# print(appartMorePrecise.head(30))
+# print("[ ... ]")
+# print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
+# print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
 
-town='bordeaux'
-appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
-print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
-print(appartMorePrecise.head(30))
-print("[ ... ]")
-print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
-print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
+# town='bordeaux'
+# appartMorePrecise, nbAppartBase = appartWithPossibilitiesToGetAPositionMorePrecise(town,gdrive_path)
+# print("================== Liste des appartements à "+town+" où il est possible d'avoir des positions plus précises ==================")
+# print(appartMorePrecise.head(30))
+# print("[ ... ]")
+# print("nb d'appartements concernés à "+town+" :"+str(len(appartMorePrecise.index))+" sur les "+str(nbAppartBase)+" appartements.")
+# print("cela représente "+str(len(appartMorePrecise.index)/nbAppartBase*100)+"% \des appartements")
+
+
+def getPosAppartAndHisMoy_withMostNumberOfOccurences(town,gdrive_path):
+  fullHisto = concatHisto(town,gdrive_path)
+  listDataHistoFull=fullHisto.drop_duplicates(subset=['id','latitude','longitude'], keep='first')
+  listDataHistoFull['nb_pos_diff']=listDataHistoFull.groupby('id')['id'].transform('count')
+  listDataHistoFull=listDataHistoFull.groupby('id').filter(lambda x: len(x) > 1)
+  listDataHistoFull= listDataHistoFull.groupby('id').mean().sort_values(by=['nb_pos_diff'],ascending=False).reset_index()
+
+  fullHisto = fullHisto.drop_duplicates(subset=['id','latitude','longitude'], keep='first')
+  appart = listDataHistoFull.head(1) #index.tolist()
+  return fullHisto[fullHisto['id'].isin(appart['id'])], appart
+
+town='paris'
+appartPos, appartPosMoy = getPosAppartAndHisMoy_withMostNumberOfOccurences(town,gdrive_path)
+print("================== Liste des positions de l'appartement à "+town+" avec le plus grand nombre de positions différentes ==================")
+print(appartPos)
+print("========> Sa position la plus précise : ")
+print(appartPosMoy)
+
+# town='bordeaux'
+# appartPos, appartPosMoy = getPosAppartAndHisMoy_withMostNumberOfOccurences(town,gdrive_path)
+# print("================== Liste des positions de l'appartement à "+town+" avec le plus grand nombre de positions différentes ==================")
+# print(appartPos)
+# print("========> Sa position la plus précise : ")
+# print(appartPosMoy)
+
+def afficherPosAppart(posApparts,posAppartsMoy):
+  world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+  # world.head()
+  dfPos = posApparts
+  gdfPos = gpd.GeoDataFrame(
+      dfPos, geometry=gpd.points_from_xy(dfPos.longitude, dfPos.latitude))
+
+  #zip the coordinates into a point object and convert to a GeoData Frame
+  geometry = [Point(xy) for xy in zip(dfPos.longitude, dfPos.latitude)]
+  geo_df = gpd.GeoDataFrame(dfPos, geometry=geometry)
+
+  geo_df = geo_df.groupby(['id'])['geometry'].apply(lambda x: Polygon(x.tolist()) if x.size > 1 else x.tolist())
+  geo_df = gpd.GeoDataFrame(geo_df, geometry='geometry')
+
+  gdfPosMoy = gpd.GeoDataFrame(
+      posAppartsMoy, geometry=gpd.points_from_xy(posAppartsMoy.longitude, posAppartsMoy.latitude))
+  axMoy = gdfPosMoy.plot(color='g', zorder=4)
+
+  axGeo = geo_df.plot(ax=axMoy,color='red', zorder=2)
+  ax = gdfPos.plot(ax=axGeo,color='k', zorder=3)
+
+  world.plot(ax=ax, zorder=1)
+  plt.show()
+
+afficherPosAppart(appartPos,appartPosMoy)
