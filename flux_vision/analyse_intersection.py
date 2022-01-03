@@ -1,7 +1,5 @@
 import pandas as pd
-import pandasql as ps
-from geopy.geocoders import Nominatim
-from geopy import distance
+from matplotlib import pyplot as plt
 
 
 # Fonction de modif destypes en valeur int
@@ -54,6 +52,7 @@ df['Zone'] = df.Zone.apply(mapZone)
 #je retire Commune monteuil car trop large
 dfTravail =  df[(df['Type'] == 0) & (df['Date'] >= "2020-04-20") & (df['Date'] <= "2020-04-26")  & (df['ZoneNuitee'] != -1) & (df.Zone != 'Commune Montreuil')]
 dfTravail = dfTravail.sort_values(['Zone', 'Date','Heures'])
+dfTravail.columns = dfTravail.columns.str.strip()
 print(dfTravail.head(100))
 
 
@@ -81,5 +80,20 @@ print(sumParisSoir.groupby('Zone').mean())
 
 
 
+dfHisto = pd.read_csv("./../../Data_FluxVisionOrange_AMIF_hackathon/presence30min.csv", sep=';',
+                 skipinitialspace=True)
+dfHisto['Type'] = dfHisto.Type.apply(mapType)
+dfHisto['Zone'] = dfHisto.Zone.apply(mapZone)
 
+dfHisto =  dfHisto[(dfHisto['Type'] == 0) & (dfHisto['Date'] >= "2020-04-20") & (dfHisto['Date'] <= "2020-04-26") & (dfHisto.Zone != 'Commune Montreuil')]
+dfHisto = dfHisto.sort_values(['Zone', 'Date','Heures'])
 
+def createHistoVolumeParHeure(df,zone):
+    print("\n ================================ : ")
+    histo = df.groupby(['Date', 'Zone', 'Heures']).Volume.sum().reset_index()
+    print(histo)
+    for date in histo.Date.value_counts().sort_index().index:
+        histo[(histo['Zone'] == zone) & (histo['Date'] == date)].plot(kind="bar", x="Heures",y="Volume", title=(zone+"-"+date))
+        plt.show()
+
+createHistoVolumeParHeure(dfHisto,"Bas Montreuil Est 4")
