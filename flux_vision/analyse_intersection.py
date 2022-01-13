@@ -77,6 +77,9 @@ print(sumParisMatin.groupby('Zone').mean())
 print("\nVolumes moyens  Soir : ")
 print(sumParisSoir.groupby('Zone').mean())
 
+print("-------------------------------")
+print(dfParisMatin[dfTravail['Date'] == "2020-04-20"])
+print("-------------------------------")
 
 
 
@@ -95,5 +98,10 @@ def createHistoVolumeParHeure(df,zone):
     for date in histo.Date.value_counts().sort_index().index:
         histo[(histo['Zone'] == zone) & (histo['Date'] == date)].plot(kind="bar", x="Heures",y="Volume", title=(zone+"-"+date))
         plt.show()
+# createHistoVolumeParHeure(dfHisto,"Bas Montreuil Est 4")
+# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 4")
+# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 5")
+# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 6")
+# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"la Noue Clos Francais Guilands 1")
+# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Centre Ville Jean Moulin Espoir 4")
 
-createHistoVolumeParHeure(dfHisto,"Bas Montreuil Est 4")
