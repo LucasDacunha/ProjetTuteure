@@ -3,6 +3,10 @@ import pandas as pd
 import geopandas as gpd
 from matplotlib import pyplot as plt
 from shapely.geometry import Point, LineString, Polygon, shape
+from folium import Map, Marker, Icon,Figure
+import folium
+from IPython.display import display
+import webbrowser
 
 # from google.colab import drive
 # drive.mount._DEBUG = True
@@ -39,7 +43,7 @@ def decoupeZone(rawdata):
   return liste
 
 
-dfListe = decoupeZone(rawdata.filter(items=['id','last_scraped','neighbourhood_cleansed','latitude','longitude']))
+# dfListe = decoupeZone(rawdata.filter(items=['id','last_scraped','neighbourhood_cleansed','latitude','longitude']))
 # print(dfListe[1])
 def appartParQuartier(dfListe):
   nbAppartParQuartier = []
@@ -52,14 +56,14 @@ def appartParQuartier(dfListe):
 # nbAppartParQuartier = []
 # for i in range(0,len(dfListe[0])):
 #   nbAppartParQuartier.append(len(dfListe[0][i]))
-nbAppartParQuartier = appartParQuartier(dfListe)
+# nbAppartParQuartier = appartParQuartier(dfListe)
 # le graph ne marche plus pour une raison inconnue je n'ai pas modifier le code
 # fig, ax = plt.subplots(figsize=(10,15))
 # ax.barh(dfListe[1], nbAppartParQuartier)
 # plt.show()
 
-review_input_file = gdrive_path + "/bordeaux/reviews.csv"
-reviewData = pd.read_csv(review_input_file)
+# review_input_file = gdrive_path + "/bordeaux/reviews.csv"
+# reviewData = pd.read_csv(review_input_file)
 
 def findLatLongFromAppartId(id,rawdata):
   latLong = []
@@ -333,4 +337,56 @@ def afficherPosAppart(posApparts,posAppartsMoy):
   world.plot(ax=ax, zorder=1)
   plt.show()
 
-afficherPosAppart(appartPos,appartPosMoy)
+# afficherPosAppart(appartPos,appartPosMoy)
+
+def mapAppartPosition(posApparts,posAppartsMoy):
+  # fig=Figure(height=1000,width=1000)
+  map = Map(location=[48.856614, 2.3522219], zoom_start=8, ) # coord Paris
+  coords=[]
+  firstIndex=-1
+  for i in posApparts.index: # car les index ne sont pas un range de 0 à X (1,2,3,...,X)
+    if(firstIndex==-1):
+      firstIndex=i
+    lat = posApparts.loc[i,"latitude"]
+    long = posApparts.loc[i,"longitude"]
+    coords.append([lat,long])
+    Marker(location=[lat,long],popup='['+str(lat)+','+str(long)+']',
+      icon=folium.Icon(color='red',icon='none')).add_to(map)
+  
+  coords.append([posApparts.loc[firstIndex,"latitude"],posApparts.loc[firstIndex,"longitude"]])
+  folium.vector_layers.PolyLine(coords,color='blue',weight=5).add_to(map)
+
+  for i in posAppartsMoy.index: # car les index ne sont pas un range de 0 à X (1,2,3,...,X)
+    lat = posAppartsMoy.loc[i,"latitude"]
+    long = posAppartsMoy.loc[i,"longitude"]
+    Marker(location=[lat,long],popup='['+str(lat)+','+str(long)+']',
+      icon=folium.Icon(color='green',icon='none')).add_to(map)
+  # fig.add_to(map)
+  map.save("map.html")
+  webbrowser.open("map.html")
+
+# mapAppartPosition(appartPos,appartPosMoy)
+
+
+def mapAfficherTrajectoire(posClients):
+  map = Map(location=[48.856614, 2.3522219], zoom_start=6, ) # coord Paris
+  coords=[]
+  index=0
+  for i in posClients.index: # car les index ne sont pas un range de 0 à X (1,2,3,...,X)
+    lat = posClients.loc[i,"latitude"]
+    long = posClients.loc[i,"longitude"]
+    coords.append([lat,long])
+    if(index==0):
+      Marker(location=[lat,long],popup='index: '+str(index)+' ; ['+str(lat)+','+str(long)+']',
+        icon=folium.Icon(color='green',icon='none'),z_index_offset=1).add_to(map)
+    else:
+      Marker(location=[lat,long],popup='index: '+str(index)+' ; ['+str(lat)+','+str(long)+']',
+        icon=folium.Icon(color='red',icon='none')).add_to(map)
+    index=index+1
+  
+  folium.vector_layers.PolyLine(coords,color='blue',weight=5).add_to(map)
+  map.save("mapTraj.html")
+  webbrowser.open("mapTraj.html")
+
+posNClientsMostOcc = selectNClientsWithTheMostNumberOfOccurences(reviewDataFull,listDataFull,1)
+mapAfficherTrajectoire(posNClientsMostOcc)
