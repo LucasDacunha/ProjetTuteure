@@ -105,10 +105,10 @@ def createHistoVolumeParHeure(df,zone):
         plt.show()
 # createHistoVolumeParHeure(dfHisto,"Bas Montreuil Est 4")
 createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 4")
-# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 5")
-# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 6")
-# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"la Noue Clos Francais Guilands 1")
-# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Centre Ville Jean Moulin Espoir 4")
+createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 5")
+createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 6")
+createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"la Noue Clos Francais Guilands 1")
+createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Centre Ville Jean Moulin Espoir 4")
 
 # HEATMAP :
 
