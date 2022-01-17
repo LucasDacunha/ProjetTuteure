@@ -104,7 +104,7 @@ def createHistoVolumeParHeure(df,zone):
         histo[(histo['Zone'] == zone) & (histo['Date'] == date)].plot(kind="bar", x="Heures",y="Volume", title=(zone+"-"+date))
         plt.show()
 # createHistoVolumeParHeure(dfHisto,"Bas Montreuil Est 4")
-# createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 4")
+createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 4")
 # createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 5")
 # createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"Bas Montreuil Est 6")
 # createHistoVolumeParHeure(dfTravail[dfTravail['ZoneNuitee'] == 535976],"la Noue Clos Francais Guilands 1")
