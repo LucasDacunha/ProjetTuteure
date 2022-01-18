@@ -154,6 +154,7 @@ make_plot_bar('median of traversals', 'lightpink',
               count_2_weekday.traversals.median(),
               count_2_weekend.traversals.median())
 
+"""Stats de visualisation sur san_francisco-censustracts-2020-1-All-MonthlyAggregate.csv"""
 
 """travel_time = pd.read_csv("san_francisco-censustracts-2020-1-All-MonthlyAggregate.csv")
 travel_time = travel_time.convert_dtypes()
